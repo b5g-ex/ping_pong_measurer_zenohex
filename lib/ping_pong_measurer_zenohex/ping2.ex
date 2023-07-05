@@ -28,13 +28,13 @@ defmodule PingPongMeasurerZenohex.Ping2 do
 
   def init({context, node_counts, data_directory_path}) when is_integer(node_counts) do
     """
-    {:ok, node_id_list} = Zenohex.ResourceServer.create_nodes(context, @node_id_prefix, node_counts)
+    {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, @node_id_prefix, node_counts)
 
     {:ok, publishers} =
-      Zenohex.Node.create_publishers(node_id_list, @message_type, @ping_topic, :multi)
+      Rclex.Node.create_publishers(node_id_list, @message_type, @ping_topic, :multi)
 
     {:ok, subscribers} =
-      Zenohex.Node.create_subscribers(node_id_list, @message_type, @pong_topic, :multi)
+      Rclex.Node.create_subscribers(node_id_list, @message_type, @pong_topic, :multi)
 
     {:ok,
      %State{
