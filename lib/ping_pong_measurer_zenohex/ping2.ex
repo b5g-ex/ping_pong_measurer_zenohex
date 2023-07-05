@@ -14,7 +14,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
   alias PingPongMeasurerZenohex.Ping2.Measurer
 
   defmodule State do
-    defstruct session: nil, #FIX? context を session に置き換えた。
+    defstruct session: nil, #FIX? context を session に置き換えたがいらないはず
               node_id_list: [],
               publishers: [],
               subscribers: [],
@@ -49,7 +49,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
      #FIX: only for one session (in the future multi pubs and subs)
      session = Zenohex.open
      {:ok, publisher} = Session.declare_publisher(session, "demo/example/zenoh-rs-pub")
-     {:ok, subscriber} = Session.declare_subscriber_wrapper(session, "demo/example/zenoh-rs-pub", fn m -> IO.inspect(m) end)
+     {:ok, subscriber} = Session.declare_subscriber(session, "demo/example/zenoh-rs-pub", fn m -> IO.inspect(m) end)
 
      publishers = [publisher]
      subscribers = [subscriber]
@@ -111,9 +111,12 @@ defmodule PingPongMeasurerZenohex.Ping2 do
       # assert index
       ^publisher_index = subscriber_index
 
+
+      # FIX: Rclex.Subscriber.start_subscribing の Zenohex 版をつくる
       Zenohex.Subscriber.start_subscribing(subscriber, state.session, fn message ->
-        message = Zenohex.Msg.read(message, @message_type)
-        Logger.debug('pong: ' ++ message.data)
+        # FIX: log message
+        # message = Zenohex.Msg.read(message, @message_type)
+        # Logger.debug('pong: ' ++ message.data)
 
         case Measurer.get_ping_counts(node_id) do
           0 ->
