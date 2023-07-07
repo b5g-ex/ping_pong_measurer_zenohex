@@ -28,28 +28,27 @@ defmodule PingPongMeasurerZenohex.Ping do
   end
 
   def init({context, node_index}) when is_integer(node_index) do
-    """ from rclex
-    {:ok, node_id} =
-      Rclex.ResourceServer.create_node(context, 'ping_node' ++ to_charlist(node_index))
+    # from rclex
+    # {:ok, node_id} =
+    #   Rclex.ResourceServer.create_node(context, 'ping_node' ++ to_charlist(node_index))
 
-    ping_topic = 'ping' ++ to_charlist(node_index)
-    pong_topic = 'pong' ++ to_charlist(node_index)
+    # ping_topic = 'ping' ++ to_charlist(node_index)
+    # pong_topic = 'pong' ++ to_charlist(node_index)
 
-    {:ok, publisher} = Rclex.Node.create_publisher(node_id, 'StdMsgs.Msg.String', ping_topic)
-    {:ok, subscriber} = Rclex.Node.create_subscriber(node_id, 'StdMsgs.Msg.String', pong_topic)
+    # {:ok, publisher} = Rclex.Node.create_publisher(node_id, 'StdMsgs.Msg.String', ping_topic)
+    # {:ok, subscriber} = Rclex.Node.create_subscriber(node_id, 'StdMsgs.Msg.String', pong_topic)
 
 
-    Rclex.Subscriber.start_subscribing([subscriber], context, fn msg ->
-      recv_msg = Rclex.Msg.read(msg, 'StdMsgs.Msg.String')
+    # Rclex.Subscriber.start_subscribing([subscriber], context, fn msg ->
+    #   recv_msg = Rclex.Msg.read(msg, 'StdMsgs.Msg.String')
 
-      Logger.info('pong: ' ++ recv_msg.data)
-      publish(node_index)
-    end)
+    #   Logger.info('pong: ' ++ recv_msg.data)
+    #   publish(node_index)
+    # end)
 
-    payload = Utils.create_payload('message')
+    # payload = Utils.create_payload('message')
 
-    {:ok, %State{node_id: node_id, publisher: publisher, payload: payload}}
-    """
+    # {:ok, %State{node_id: node_id, publisher: publisher, payload: payload}}
 
     session = Zenohex.open
 

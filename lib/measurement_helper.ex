@@ -7,7 +7,7 @@ defmodule MeasurementHelper do
       when node_counts in [1, 10, 100] and payload_bytes in [10, 100, 1000, 10000] do
     data_directory_path = prepare_data_directory!(node_counts, payload_bytes, measurement_times)
 
-    context = Zenohex.Zenohexinit()
+    context = Zenohex.open()
 
     PingPongMeasurerZenohex.start_os_info_measurement(data_directory_path)
     PingPongMeasurerZenohex.start_ping_processes(context, node_counts, data_directory_path)
