@@ -27,46 +27,45 @@ defmodule PingPongMeasurerZenohex.Ping2 do
   end
 
   def init({session, node_counts, data_directory_path}) when is_integer(node_counts) do
-    """
-    {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, @node_id_prefix, node_counts)
 
-    {:ok, publishers} =
-      Rclex.Node.create_publishers(node_id_list, @message_type, @ping_topic, :multi)
+    # {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, @node_id_prefix, node_counts)
 
-    {:ok, subscribers} =
-      Rclex.Node.create_subscribers(node_id_list, @message_type, @pong_topic, :multi)
+    # {:ok, publishers} =
+    #   Rclex.Node.create_publishers(node_id_list, @message_type, @ping_topic, :multi)
+
+    # {:ok, subscribers} =
+    #   Rclex.Node.create_subscribers(node_id_list, @message_type, @pong_topic, :multi)
+
+    # {:ok,
+    #  %State{
+    #    context: context,
+    #    node_id_list: node_id_list,
+    #    publishers: publishers,
+    #    subscribers: subscribers,
+    #    data_directory_path: data_directory_path
+    #  }}
+
+    publishers = for i <- 0..(node_counts - 1) do
+      {:ok, publisher} = Session.declare_publisher(session, @ping_topic ++ '#{i}')
+      publisher
+    end
+
+    subscribers = for i <- 0..(node_counts - 1) do
+      subscriber = Session.declare_subscriber(session, @pong_topic ++ '#{i}', fn message ->  IO.inspect(message) end)
+      # FIX: "payload_string" to message
+      subscriber
+    end
+
+    node_id_list = for index <- 0..(node_counts - 1), do: @node_id_prefix ++ Integer.to_charlist(index)
 
     {:ok,
-     %State{
-       context: context,
-       node_id_list: node_id_list,
-       publishers: publishers,
-       subscribers: subscribers,
-       data_directory_path: data_directory_path
-     }}
-     """
-
-     publishers = []
-     subscribers = []
-
-     for i <- node_counts do
-      {:ok, publisher} = Session.declare_publisher(session, @ping_topic ++ '#{i}')
-      subscriber = Session.declare_subscriber(session, @pong_topic ++ '#{i}', fn message ->  IO.inspect message end)
-      # FIX: "payload_string" to message
-      publishers = [publisher | publishers]
-      subscribers = [subscriber | subscribers]
-     end
-
-     node_id_list = ['a']
-
-     {:ok,
-     %State{
-       session: session,
-       node_id_list: node_id_list,
-       publishers: publishers,
-       subscribers: subscribers,
-       data_directory_path: data_directory_path
-     }}
+    %State{
+      session: session,
+      node_id_list: node_id_list,
+      publishers: publishers,
+      subscribers: subscribers,
+      data_directory_path: data_directory_path
+    }}
   end
 
   def get_node_id_list() do
