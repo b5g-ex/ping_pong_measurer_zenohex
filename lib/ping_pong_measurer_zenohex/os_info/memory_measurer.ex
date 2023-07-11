@@ -1,4 +1,4 @@
-defmodule PingPongMeasurerRclex.OsInfo.MemoryMeasurer do
+defmodule PingPongMeasurerZenohex.OsInfo.MemoryMeasurer do
   use GenServer, shutdown: :infinity
 
   defmodule State do
