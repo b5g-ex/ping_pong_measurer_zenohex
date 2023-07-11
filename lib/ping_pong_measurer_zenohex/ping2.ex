@@ -142,7 +142,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
   end
 
   def ping(node_id, publisher, payload_charlist) when is_list(payload_charlist) do
-    Zenohex.Publisher.put(publisher, Utils.create_payload(payload_charlist))
+    Publisher.put(publisher, Utils.create_payload(payload_charlist))
     Measurer.increment_ping_counts(node_id)
   end
 end
