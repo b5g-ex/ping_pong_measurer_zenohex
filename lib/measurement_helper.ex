@@ -27,7 +27,7 @@ defmodule MeasurementHelper do
 
   defp prepare_data_directory!(node_counts, payload_bytes, measurement_times) do
     data_directory_path =
-      Application.get_env(:ping_pong_measurer_Zenohex, :data_directory_path) ||
+      Application.get_env(:ping_pong_measurer_zenohex, :data_directory_path) ||
         raise """
         You have to configure :data_directory_path in config.exs
         ex) config :ping_pong_measurer_Zenohex, :data_directory_path, "path/to/directory"
