@@ -40,7 +40,7 @@ defmodule PingPongMeasurerZenohex.Pong2 do
     publishers = []
     subscribers = []
 
-    for i <- node_counts do
+    for i <- 0 .. (node_counts - 1) do
       {:ok, publisher} = Session.declare_publisher(session, @pong_topic ++ '#{i}')
       subscriber = Session.declare_subscriber(session, @ping_topic ++ '#{i}', fn _message ->  Publisher.put(publisher, "payload_string") end)
       # FIX: "payload_string" to message
