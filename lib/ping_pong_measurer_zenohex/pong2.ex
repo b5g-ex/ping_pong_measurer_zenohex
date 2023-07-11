@@ -7,8 +7,6 @@ defmodule PingPongMeasurerZenohex.Pong2 do
   @ping_topic 'ping_topic'
   @pong_topic 'pong_topic'
 
-  alias PingPongMeasurerZenohex.Utils
-
   def start_link(args_tuple) do
     GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
   end
