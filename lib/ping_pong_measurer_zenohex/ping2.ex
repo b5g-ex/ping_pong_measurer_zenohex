@@ -14,7 +14,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
   alias PingPongMeasurerZenohex.Ping2.Measurer
 
   defmodule State do
-    defstruct session: nil, #FIX? context を session に置き換えたがいらないはず
+    defstruct session: nil,
               node_id_list: [],
               publishers: [],
               subscribers: [],
@@ -26,7 +26,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
   end
 
-  def init({context, node_counts, data_directory_path}) when is_integer(node_counts) do
+  def init({session, node_counts, data_directory_path}) when is_integer(node_counts) do
     """
     {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, @node_id_prefix, node_counts)
 
@@ -46,13 +46,16 @@ defmodule PingPongMeasurerZenohex.Ping2 do
      }}
      """
 
-     #FIX: only for one session (in the future multi pubs and subs)
-     session = Zenohex.open
-     {:ok, publisher} = Session.declare_publisher(session, "demo/example/zenoh-rs-pub")
-     {:ok, subscriber} = Session.declare_subscriber(session, "demo/example/zenoh-rs-pub", fn m -> IO.inspect(m) end)
+     publishers = []
+     subscribers = []
 
-     publishers = [publisher]
-     subscribers = [subscriber]
+     for i <- node_counts do
+      {:ok, publisher} = Session.declare_publisher(session, @ping_topic ++ '#{i}')
+      subscriber = Session.declare_subscriber(session, @pong_topic ++ '#{i}', fn message ->  IO.inspect message end)
+      # FIX: "payload_string" to message
+      publishers = [publisher | publishers]
+      subscribers = [subscriber | subscribers]
+     end
 
      node_id_list = ['a']
 
