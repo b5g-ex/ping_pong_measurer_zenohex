@@ -2,4 +2,4 @@ import Config
 
 config :logger, level: :info
 
-config :ping_pong_measurer_zenohex, :data_directory_path, "./data"
+config :ping_pong_measurer_Zenohex, :data_directory_path, "./data"
