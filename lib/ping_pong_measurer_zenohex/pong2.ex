@@ -37,21 +37,19 @@ defmodule PingPongMeasurerZenohex.Pong2 do
     # {:ok, nil}
 
     # session = Zenohex.open
-    {:ok, publisher} = Session.declare_publisher(session, "demo/example/zenoh-rs-pub")
-    subscriber = Session.declare_subscriber(session, "demo/example/zenoh-rs-pub", fn m -> IO.inspect(m) end)
+    publishers = []
+    subscribers = []
 
-    publishers = [publisher]
-    subscribers = [subscriber]
-
-    node_id_list = [0]
-
-    for {_node_id, index} <- Enum.with_index(node_id_list) do
-      subscriber = Enum.at(subscribers, index)
-      publisher = Enum.at(publishers, index)
-
-      payload = "payload_string"
-
-      Publisher.put(publisher, payload)
+    for i <- node_counts do
+      {:ok, publisher} = Session.declare_publisher(session, @pong_topic ++ '#{i}')
+      subscriber = Session.declare_subscriber(session, @ping_topic ++ '#{i}', fn _message ->  Publisher.put(publisher, "payload_string") end)
+      # FIX: "payload_string" to message
+      publishers = [publisher | publishers]
+      subscribers = [subscriber | subscribers]
     end
+
+    # node_id_list = [0]
+
+    {:ok, nil}
   end
 end
