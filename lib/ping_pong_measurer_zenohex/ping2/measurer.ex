@@ -77,6 +77,8 @@ defmodule PingPongMeasurerZenohex.Ping2.Measurer do
     file_path = Path.join(data_directory_path, file_name)
 
     Data.save(file_path, [header() | body(measurements)])
+
+    Logger.info("measurer #{file_name} done.")
   end
 
   def handle_call(:get_ping_counts, _from, %State{} = state) do

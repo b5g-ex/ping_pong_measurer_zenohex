@@ -36,6 +36,7 @@ defmodule PingPongMeasurerZenohex do
   def start_ping_pong(payload) do
     Ping.get_publishers()
     |> Ping.publish(payload)
+    Logger.info("start_ping_pong done.")
   end
 
   def wait_until_all_nodes_finished(node_counts, finished_node_counts \\ 0) do
