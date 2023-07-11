@@ -1,4 +1,4 @@
-defmodule PingPongMeasurerRclex.Pong do
+defmodule PingPongMeasurerZenohex.Pong do
   use GenServer
 
   require Logger
@@ -11,7 +11,7 @@ defmodule PingPongMeasurerRclex.Pong do
     )
   end
 
-  def init({context, node_index}) when is_integer(node_index) do
+  def init({_context, node_index}) when is_integer(node_index) do
     """
     {:ok, node_id} =
       Rclex.ResourceServer.create_node(context, 'pong_node' ++ to_charlist(node_index))
