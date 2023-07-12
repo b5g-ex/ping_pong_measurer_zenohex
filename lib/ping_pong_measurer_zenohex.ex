@@ -12,9 +12,16 @@ defmodule PingPongMeasurerZenohex do
   alias PingPongMeasurerZenohex.OsInfo.MemoryMeasurer
   alias PingPongMeasurerZenohex.Ping2.Measurer, as: PingMeasurer
 
-  def start_ping_processes(context, node_counts, data_directory_path) do
-    Ping.start_link({context, node_counts, data_directory_path})
-    Ping.start_subscribing()
+  # def start_ping_processes(node_counts, data_directory_path) do
+  #   Ping.start_link({node_counts, data_directory_path})
+  #   #Ping.start_subscribing()
+
+  #   Logger.info("start_ping_processes done.")
+  # end
+
+  def start_ping_processes(node_counts) do
+    Ping.start_link({node_counts})
+    #Ping.start_subscribing()
 
     Logger.info("start_ping_processes done.")
   end
@@ -25,8 +32,8 @@ defmodule PingPongMeasurerZenohex do
     Logger.info("stop_ping_processes done.")
   end
 
-  def start_pong_processes(context, node_counts) do
-    Pong.start_link({context, node_counts})
+  def start_pong_processes(session,node_counts) do
+    Pong.start_link({session,node_counts})
   end
 
   def stop_pong_processes() do
@@ -36,6 +43,11 @@ defmodule PingPongMeasurerZenohex do
   def start_ping_pong(payload) do
     Ping.get_publishers()
     |> Ping.publish(payload)
+  end
+
+  def start_process(node_counts,payload) do
+    Ping.get_publishers()
+    |> Ping.pub(node_counts,payload)
   end
 
   def wait_until_all_nodes_finished(node_counts, finished_node_counts \\ 0) do
@@ -73,14 +85,21 @@ defmodule PingPongMeasurerZenohex do
     Logger.info("stop_os_info_measurement done.")
   end
 
-  def start_ping_measurer(data_directory_path) when is_binary(data_directory_path) do
+  def start_ping_measurer(data_directory_path,node_counts) when is_binary(data_directory_path) do
     ds_name = ping_measurer_supervisor_name()
     PingPongMeasurerZenohex.DynamicSupervisor.start_link(ds_name)
 
-    for node_id <- Ping.get_node_id_list() do
+    # for node_id <- Ping.get_node_id_list() do
+    #   DynamicSupervisor.start_child(
+    #     ds_name,
+    #     {PingMeasurer, %{node_id: node_id, data_directory_path: data_directory_path}}
+    #   )
+    # end
+
+    for i <- 1..node_counts do
       DynamicSupervisor.start_child(
         ds_name,
-        {PingMeasurer, %{node_id: node_id, data_directory_path: data_directory_path}}
+        {PingMeasurer, %{node_counts: node_counts, data_directory_path: data_directory_path}}
       )
     end
 

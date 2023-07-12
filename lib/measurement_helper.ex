@@ -5,24 +5,29 @@ defmodule MeasurementHelper do
 
   def start_measurement(node_counts \\ 1, payload_bytes \\ 10, measurement_times \\ 10)
       when node_counts in [1, 10, 100] and payload_bytes in [10, 100, 1000, 10000] do
-    data_directory_path = prepare_data_directory!(node_counts, payload_bytes, measurement_times)
+    #data_directory_path = prepare_data_directory!(node_counts, payload_bytes, measurement_times)
 
-    context = Zenohex.Zenohexinit()
+    #context = Zenohex.open()
 
-    PingPongMeasurerZenohex.start_os_info_measurement(data_directory_path)
-    PingPongMeasurerZenohex.start_ping_processes(context, node_counts, data_directory_path)
-    PingPongMeasurerZenohex.start_ping_measurer(data_directory_path)
+    #PingPongMeasurerZenohex.start_os_info_measurement(data_directory_path)
+    #PingPongMeasurerZenohex.start_ping_processes(node_counts, data_directory_path)
+    PingPongMeasurerZenohex.start_ping_processes(node_counts)
+    #PingPongMeasurerZenohex.start_ping_measurer(data_directory_path,node_counts)
 
-    for i <- 1..measurement_times do
-      PingPongMeasurerZenohex.start_ping_pong(String.duplicate("a", payload_bytes))
-      PingPongMeasurerZenohex.wait_until_all_nodes_finished(node_counts)
+    # for i <- 1..measurement_times do
+    #   PingPongMeasurerZenohex.start_ping_pong(String.duplicate("a", payload_bytes))
+    #   PingPongMeasurerZenohex.wait_until_all_nodes_finished(node_counts)
 
-      Logger.info(">>>>>>>>>> #{i}/#{measurement_times}")
-    end
+    #   Logger.info(">>>>>>>>>> #{i}/#{measurement_times}")
+    # end
 
-    PingPongMeasurerZenohex.stop_ping_measurer()
+    #PingPongMeasurerZenohex.start_process(node_counts,String.duplicate("a", payload_bytes))
+    PingPongMeasurerZenohex.start_process(node_counts,"Hello?")
+
+
+    #PingPongMeasurerZenohex.stop_ping_measurer()
     PingPongMeasurerZenohex.stop_ping_processes()
-    PingPongMeasurerZenohex.stop_os_info_measurement()
+    #PingPongMeasurerZenohex.stop_os_info_measurement()
   end
 
   defp prepare_data_directory!(node_counts, payload_bytes, measurement_times) do
@@ -39,5 +44,11 @@ defmodule MeasurementHelper do
 
     File.mkdir_p!(data_directory_path)
     data_directory_path
+  end
+
+  def start_node(longname, cookie) when is_binary(longname) and is_atom(cookie) do
+    System.cmd("epmd", ["-daemon"])
+    longname |> String.to_atom() |> Node.start()
+    Node.set_cookie(cookie)
   end
 end
