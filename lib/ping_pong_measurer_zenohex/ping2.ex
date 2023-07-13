@@ -3,21 +3,19 @@ defmodule PingPongMeasurerZenohex.Ping2 do
 
   require Logger
 
-  @ping_max 100
+  @ping_max 10
   @message_type 'StdMsgs.Msg.String'
   @ping_topic 'ping_topic'
   @pong_topic 'pong_topic'
   @node_id_prefix 'ping_node'
   @monotonic_time_unit :microsecond
 
-  alias PingPongMeasurerZenohex.Utils
   alias PingPongMeasurerZenohex.Ping2.Measurer
 
   defmodule State do
     defstruct session: nil,
               node_id_list: [],
               publishers: [],
-              subscribers: [],
               data_directory_path: "",
               from: nil
   end
@@ -45,27 +43,27 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     #    data_directory_path: data_directory_path
     #  }}
 
-    node_publishers_subscribers = for i <- 0..(node_counts - 1) do
+    node_publishers = for i <- 0..(node_counts - 1) do
+      pub_node_id = "#{@ping_topic}" <> "#{i}"
+      sub_node_id = "#{@pong_topic}" <> "#{i}"
 
       node_id = @node_id_prefix ++ Integer.to_charlist(i)
 
-      {:ok, publisher} = Session.declare_publisher(session, "#{@ping_topic}" <> "#{i}")
+      {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
 
-      subscriber = Session.declare_subscriber(session, "#{@pong_topic}" <> "#{i}", fn message ->  callback(node_id, publisher, message) end)
+      Session.declare_subscriber(session, sub_node_id, fn message ->  callback(node_id, publisher, message) end)
 
-      {node_id, publisher, subscriber}
+      {node_id, {String.to_charlist(pub_node_id), publisher, :pub}}
     end
 
-    node_id_list = Enum.map(node_publishers_subscribers, &elem(&1, 0))
-    publishers = Enum.map(node_publishers_subscribers, &elem(&1, 1))
-    subscribers = Enum.map(node_publishers_subscribers, &elem(&1, 2))
+    node_id_list = Enum.map(node_publishers, &elem(&1, 0))
+    publishers = Enum.map(node_publishers, &elem(&1, 1))
 
     {:ok,
     %State{
       session: session,
       node_id_list: node_id_list,
       publishers: publishers,
-      subscribers: subscribers,
       data_directory_path: data_directory_path
     }}
   end
@@ -101,7 +99,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     publishers
     |> Flow.from_enumerable(max_demand: 1, stages: Enum.count(publishers))
     |> Flow.map(fn publisher ->
-      {node_id, _topic, :pub} = publisher
+      {node_id, _reference, :pub} = publisher
 
       Measurer.start_measurement(
         node_id,
@@ -131,7 +129,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
   end
 
   def ping(node_id, publisher, payload_charlist) when is_list(payload_charlist) do
-    Publisher.put(publisher, Utils.create_payload(payload_charlist))
+    Publisher.put(publisher, payload_charlist)
     Measurer.increment_ping_counts(node_id)
   end
 end

@@ -9,7 +9,7 @@ defmodule MeasurementHelper do
 
     context = Zenohex.open()
 
-    PingPongMeasurerZenohex.start_os_info_measurement(data_directory_path)
+    # PingPongMeasurerZenohex.start_os_info_measurement(data_directory_path)
     PingPongMeasurerZenohex.start_ping_processes(context, node_counts, data_directory_path)
     PingPongMeasurerZenohex.start_ping_measurer(data_directory_path)
 
@@ -22,7 +22,7 @@ defmodule MeasurementHelper do
 
     PingPongMeasurerZenohex.stop_ping_measurer()
     PingPongMeasurerZenohex.stop_ping_processes()
-    PingPongMeasurerZenohex.stop_os_info_measurement()
+    # PingPongMeasurerZenohex.stop_os_info_measurement()
   end
 
   defp prepare_data_directory!(node_counts, payload_bytes, measurement_times) do
