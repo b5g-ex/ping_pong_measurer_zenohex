@@ -9,6 +9,13 @@ defmodule PingPongMeasurerZenohex.Pong2 do
 
   alias PingPongMeasurerZenohex.Utils
 
+
+  defmodule State do
+    defstruct publishers: [],
+              subscribers: []
+              #data_directory_path: "",
+  end
+
   def start_link(args_tuple) do
     GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
   end
@@ -29,9 +36,10 @@ defmodule PingPongMeasurerZenohex.Pong2 do
       #IO.puts(subscriber)
       publishers  = publishers ++ [publisher]
       subscribers = subscribers ++ [subscriber]
-      #publishers  = [publishers|publisher]
-      #subscribers = [subscribers|publisher]
+
     end
+
+
 
     # for {_node_id, index} <- Enum.with_index(node_id_list) do
     #   subscriber = Enum.at(subscribers, index)
@@ -40,7 +48,12 @@ defmodule PingPongMeasurerZenohex.Pong2 do
 
     #   Publisher.put(publisher, payload)
     # end
-    {:ok, nil}
+    {:ok,
+     %State{
+       publishers: publishers,
+       subscribers: subscribers,
+       #data_directory_path: data_directory_path
+     }}
   end
 
   def callback(m,publisher) do #送り返す

@@ -1,17 +1,22 @@
-defmodule PingPongMeasurerRclex.Pong do
+defmodule PingPongMeasurerZenohex.Pong do
   use GenServer
 
   require Logger
 
   alias PingPongMeasurerZenohex.Utils
 
-  def start_link({_, node_index} = args_tuple) do
-    GenServer.start_link(__MODULE__, args_tuple,
-      name: Utils.get_process_name(__MODULE__, node_index)
-    )
+  # def start_link({_, node_index} = args_tuple) do
+  #   GenServer.start_link(__MODULE__, args_tuple,
+  #     name: Utils.get_process_name(__MODULE__, node_index)
+  #   )
+  # end
+
+  def start_link(args_tuple) do
+    GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
   end
 
-  def init({context, node_index}) when is_integer(node_index) do
+
+  def init({session,node_counts}) do #when is_integer(node_index) do
     """
     {:ok, node_id} =
       Rclex.ResourceServer.create_node(context, 'pong_node' ++ to_charlist(node_index))
@@ -31,7 +36,18 @@ defmodule PingPongMeasurerRclex.Pong do
 
     {:ok, nil}
     """
+    {:ok, publisher} = Session.declare_publisher(session, "zenoh-rs-pong")
+    subscriber = Session.declare_subscriber(session, "zenoh-rs-ping", fn m -> callback(m,publisher) end)
+    {:ok,{publisher,subscriber}}
+  end
 
+  def callback(m,publisher) do #送り返す
+    pong(publisher,m)
+    IO.inspect(m)
+  end
 
+  def pong(publisher, payload)  do
+    Publisher.put(publisher, payload)
+    #Measurer.increment_ping_counts(node_id)
   end
 end

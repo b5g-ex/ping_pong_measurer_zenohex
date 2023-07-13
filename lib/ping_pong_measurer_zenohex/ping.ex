@@ -21,13 +21,17 @@ defmodule PingPongMeasurerZenohex.Ping do
           }
   end
 
-  def start_link({_, node_index} = args_tuple) do
-    GenServer.start_link(__MODULE__, args_tuple,
-      name: Utils.get_process_name(__MODULE__, node_index)
-    )
+  # def start_link({_, node_index} = args_tuple) do
+  #   GenServer.start_link(__MODULE__, args_tuple,
+  #     name: Utils.get_process_name(__MODULE__, node_index)
+  #   )
+  # end
+  def start_link(args_tuple) do
+    GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
   end
 
-  def init({node_index}) when is_integer(node_index) do
+
+  def init({node_counts}) when is_integer(node_counts) do
     # """ from rclex
     # {:ok, node_id} =
     #   Rclex.ResourceServer.create_node(context, 'ping_node' ++ to_charlist(node_index))
@@ -53,49 +57,70 @@ defmodule PingPongMeasurerZenohex.Ping do
 
     session = Zenohex.open
 
-    {:ok, publisher} = Session.declare_publisher(session, "demo/example/zenoh-rs-pub")
-    Publisher.put(publisher, " (sample) Hello zenoh?")
-    Session.declare_subscriber(session, "demo/example/zenoh-rs-pub", fn m -> IO.inspect(m) end)
+    # {:ok, publisher} = Session.declare_publisher(session, "demo/example/zenoh-rs-pub")
+    # Publisher.put(publisher, " (sample) Hello zenoh?")
+    # Session.declare_subscriber(session, "demo/example/zenoh-rs-pub", fn m -> IO.inspect(m) end)
+
+    {:ok, publisher} = Session.declare_publisher(session, "zenoh-rs-ping")
+    subscriber = Session.declare_subscriber(session, "zenoh-rs-pong" , fn m -> IO.inspect(m) end)
+    #Publisher.put(publisher, " (sample) Hello zenoh?")
 
     {:ok, %State{publisher: publisher}}
   end
 
-  def publish(node_index \\ 1) do
-    GenServer.call(Utils.get_process_name(__MODULE__, node_index), :publish)
+
+
+
+  def get_publishers do
+    GenServer.call(__MODULE__, :get_publisher)
   end
 
-  def handle_call(
-        :publish,
-        _from,
-        %State{ping_counts: ping_counts, measurements: measurements} = state
-      ) do
-    state =
-      case ping_counts do
-        0 ->
-          measurement = %Measurement{
-            measurement_time: DateTime.utc_now(),
-            send_time: System.monotonic_time(:microsecond)
-          }
+  def pub(publisher,node_counts, payload) do #when is_binary(payload) do
 
-          ping(state)
-          %State{state | ping_counts: ping_counts + 1, measurements: [measurement | measurements]}
+      ping(publisher,payload)
 
-        @ping_counts_max ->
-          [h | t] = measurements
-          measurement = %Measurement{h | recv_time: System.monotonic_time(:microsecond)}
-          IO.inspect("#{inspect((measurement.recv_time - measurement.send_time) / 1000)} msec")
-
-          %State{state | ping_counts: 0, measurements: [measurement | t]}
-
-        _ ->
-          ping(state)
-          %State{state | ping_counts: ping_counts + 1}
-      end
-
-    {:reply, :ok, state}
   end
 
-  defp ping(%State{} = state) do
-    Rclex.Publisher.publish([state.publisher], [state.payload])
+  # def publish(node_index \\ 1) do
+  #   GenServer.call(Utils.get_process_name(__MODULE__, node_index), :publish)
+  # end
+
+  # def handle_call(
+  #       :publish,
+  #       _from,
+  #       %State{ping_counts: ping_counts, measurements: measurements} = state
+  #     ) do
+  #   state =
+  #     case ping_counts do
+  #       0 ->
+  #         measurement = %Measurement{
+  #           measurement_time: DateTime.utc_now(),
+  #           send_time: System.monotonic_time(:microsecond)
+  #         }
+
+  #         ping(state)
+  #         %State{state | ping_counts: ping_counts + 1, measurements: [measurement | measurements]}
+
+  #       @ping_counts_max ->
+  #         [h | t] = measurements
+  #         measurement = %Measurement{h | recv_time: System.monotonic_time(:microsecond)}
+  #         IO.inspect("#{inspect((measurement.recv_time - measurement.send_time) / 1000)} msec")
+
+  #         %State{state | ping_counts: 0, measurements: [measurement | t]}
+
+  #       _ ->
+  #         ping(state)
+  #         %State{state | ping_counts: ping_counts + 1}
+  #     end
+
+  #   {:reply, :ok, state}
+  # end
+
+  def handle_call(:get_publisher, _from, state) do
+    {:reply, state.publisher, state}
+  end
+
+  defp ping(publisher,payload) do
+    Publisher.put(publisher,payload)
   end
 end

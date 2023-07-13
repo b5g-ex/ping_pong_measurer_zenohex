@@ -5,8 +5,8 @@ defmodule PingPongMeasurerZenohex do
 
   require Logger
 
-  alias PingPongMeasurerZenohex.Ping2, as: Ping
-  alias PingPongMeasurerZenohex.Pong2, as: Pong
+  alias PingPongMeasurerZenohex.Ping, as: Ping
+  alias PingPongMeasurerZenohex.Pong, as: Pong
 
   alias PingPongMeasurerZenohex.OsInfo.CpuMeasurer
   alias PingPongMeasurerZenohex.OsInfo.MemoryMeasurer
@@ -26,6 +26,13 @@ defmodule PingPongMeasurerZenohex do
     Logger.info("start_ping_processes done.")
   end
 
+  # def start_ping_process(node_counts) do
+  #   Ping.start_link({node_counts})
+  #   #Ping.start_subscribing()
+
+  #   Logger.info("start_ping_processes done.")
+  # end
+
   def stop_ping_processes() do
     GenServer.stop(Ping)
 
@@ -33,6 +40,10 @@ defmodule PingPongMeasurerZenohex do
   end
 
   def start_pong_processes(session,node_counts) do
+    Pong.start_link({session,node_counts})
+  end
+
+  def start_pong_process(session,node_counts) do
     Pong.start_link({session,node_counts})
   end
 

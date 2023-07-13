@@ -29,11 +29,11 @@ defmodule PingPongMeasurerZenohex.Ping2 do
   def init({node_counts}) when is_integer(node_counts) do
     #def init({node_counts, data_directory_path}) when is_integer(node_counts) do
 
-
+    session = Zenohex.open
      #FIX: only for one session (in the future multi pubs and subs)
     publishers= []
     subscribers = []
-    session = Zenohex.open
+
     for i <- 1..node_counts do
       {:ok, publisher} = Session.declare_publisher(session, "zenoh-rs-ping#{i}")
       subscriber = Session.declare_subscriber(session, "zenoh-rs-pong#{i}" , fn m -> callback(m) end)
@@ -45,8 +45,8 @@ defmodule PingPongMeasurerZenohex.Ping2 do
       #subscribers = [subscriber]
 
      #node_id_list = ['a']
-
     end
+
      {:ok,
      %State{
        session: session,
