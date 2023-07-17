@@ -4,12 +4,12 @@ defmodule MeasurementHelper do
   alias PingPongMeasurerZenohex.Data
 
   def test() do
-    start_pong_processes(30)
-    start_measurement(30, 1000, 100)
+    start_pong_processes(10)
+    start_measurement(10, 1000, 10)
   end
 
   def start_pong_processes(node_counts) do
-    PingPongMeasurerZenohex.Pong2.start_link({Zenohex.open(), node_counts})
+    PingPongMeasurerZenohex.Pong.start_link({Zenohex.open(), node_counts})
   end
 
   def start_measurement(node_counts \\ 1, payload_bytes \\ 10, measurement_times \\ 10) do

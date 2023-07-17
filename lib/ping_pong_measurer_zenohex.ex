@@ -5,12 +5,12 @@ defmodule PingPongMeasurerZenohex do
 
   require Logger
 
-  alias PingPongMeasurerZenohex.Ping2, as: Ping
-  alias PingPongMeasurerZenohex.Pong2, as: Pong
+  alias PingPongMeasurerZenohex.Ping, as: Ping
+  alias PingPongMeasurerZenohex.Pong, as: Pong
 
   alias PingPongMeasurerZenohex.OsInfo.CpuMeasurer
   alias PingPongMeasurerZenohex.OsInfo.MemoryMeasurer
-  alias PingPongMeasurerZenohex.Ping2.Measurer, as: PingMeasurer
+  alias PingPongMeasurerZenohex.Measurer, as: PingMeasurer
 
   def start_ping_processes(session, node_counts, data_directory_path) do
     Ping.start_link({session, node_counts, data_directory_path})

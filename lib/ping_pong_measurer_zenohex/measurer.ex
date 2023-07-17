@@ -1,4 +1,4 @@
-defmodule PingPongMeasurerZenohex.Ping2.Measurer do
+defmodule PingPongMeasurerZenohex.Measurer do
   # NOTE: USE SHUTDOWN PARAMETER LIKE BELOW,
   #       WHEN YOUR CODES NEED SOME TIME TO PROCESS TERMINATE FUNCTION
   use GenServer, shutdown: :infinity

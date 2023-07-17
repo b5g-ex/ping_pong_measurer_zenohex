@@ -3,7 +3,6 @@ defmodule PingPongMeasurerZenohex.Pong do
 
   require Logger
 
-  @message_type 'StdMsgs.Msg.String'
   @ping_topic 'ping_topic'
   @pong_topic 'pong_topic'
 
@@ -12,20 +11,14 @@ defmodule PingPongMeasurerZenohex.Pong do
   end
 
   def init({session, node_counts}) when is_integer(node_counts) do
-    {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{0}")
+    for i <- 0..(node_counts - 1) do
+      {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{i}")
 
-    Session.declare_subscriber(session, "#{@ping_topic}" <> "#{0}", fn message ->
-      IO.puts(message)
-    end)
+      Session.declare_subscriber(session, "#{@ping_topic}" <> "#{i}", fn message ->
+        Publisher.put(publisher, message)
+      end)
+    end
 
-    # FIX: IO.puts message to callback(publisher, message)
-    Logger.info("#{0}")
     {:ok, nil}
-  end
-
-  defp callback(publisher, message) do
-    Logger.info(publisher)
-    Logger.info(message)
-    Publisher.put(publisher, message)
   end
 end
