@@ -24,7 +24,19 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
   end
 
-  def init({session, node_counts, data_directory_path, from}) when is_integer(node_counts) do
+  def init(node_counts) when is_integer(node_counts) do
+    session = Zenohex.open()
+    {:ok, publisher} = Session.declare_publisher(session, "#{@ping_topic}" <> "#{0}")
+
+    Session.declare_subscriber(session, "#{@pong_topic}" <> "#{0}", fn message ->
+      Publisher.put(publisher, message)
+      IO.puts("Ping " <> message)
+    end)
+
+    Publisher.put(publisher, "1")
+
+    {:ok, publisher}
+
     # {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, @node_id_prefix, node_counts)
 
     # {:ok, publishers} =
@@ -42,32 +54,32 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     #    data_directory_path: data_directory_path
     #  }}
 
-    node_publishers =
-      for i <- 0..(node_counts - 1) do
-        pub_node_id = "#{@ping_topic}" <> "#{i}"
-        sub_node_id = "#{@pong_topic}" <> "#{i}"
+    # node_publishers =
+    #   for i <- 0..(node_counts - 1) do
+    #     pub_node_id = "#{@ping_topic}" <> "#{i}"
+    #     sub_node_id = "#{@pong_topic}" <> "#{i}"
 
-        node_id = @node_id_prefix ++ Integer.to_charlist(i)
+    #     node_id = @node_id_prefix ++ Integer.to_charlist(i)
 
-        {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
+    #     {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
 
-        Session.declare_subscriber(session, sub_node_id, fn message ->
-          callback(node_id, publisher, message, from)
-        end)
+    #     Session.declare_subscriber(session, sub_node_id, fn message ->
+    #       callback(node_id, publisher, message, from)
+    #     end)
 
-        {node_id, {String.to_charlist(pub_node_id), publisher, :pub}}
-      end
+    #     {node_id, {String.to_charlist(pub_node_id), publisher, :pub}}
+    #   end
 
-    node_id_list = Enum.map(node_publishers, &elem(&1, 0))
-    publishers = Enum.map(node_publishers, &elem(&1, 1))
+    # node_id_list = Enum.map(node_publishers, &elem(&1, 0))
+    # publishers = Enum.map(node_publishers, &elem(&1, 1))
 
-    {:ok,
-     %State{
-       session: session,
-       node_id_list: node_id_list,
-       publishers: publishers,
-       data_directory_path: data_directory_path
-     }}
+    # {:ok,
+    #  %State{
+    #    session: session,
+    #    node_id_list: node_id_list,
+    #    publishers: publishers,
+    #    data_directory_path: data_directory_path
+    #  }}
   end
 
   defp callback(node_id, publisher, message, from) do

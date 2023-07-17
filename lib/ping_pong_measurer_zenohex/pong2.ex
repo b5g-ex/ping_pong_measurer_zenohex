@@ -11,49 +11,58 @@ defmodule PingPongMeasurerZenohex.Pong2 do
     GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
   end
 
-  def init({session, node_counts}) when is_integer(node_counts) do
-    # {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, 'pong_node', node_counts)
+  def init(node_counts) when is_integer(node_counts) do
+    session = Zenohex.open()
+    {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{0}")
 
-    # {:ok, subscribers} =
-    #   Rclex.Node.create_subscribers(node_id_list, @message_type, @ping_topic, :multi)
+    Session.declare_subscriber(session, "#{@ping_topic}" <> "#{0}", fn message ->
+      Publisher.put(publisher, message)
+      IO.puts("Pong : " <> message)
+    end)
 
-    # {:ok, publishers} =
-    #   Rclex.Node.create_publishers(node_id_list, @message_type, @pong_topic, :multi)
+    # # {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, 'pong_node', node_counts)
 
-    # for {_node_id, index} <- Enum.with_index(node_id_list) do
-    #   subscriber = Enum.at(subscribers, index)
-    #   publisher = Enum.at(publishers, index)
+    # # {:ok, subscribers} =
+    # #   Rclex.Node.create_subscribers(node_id_list, @message_type, @ping_topic, :multi)
 
-    #   Rclex.Subscriber.start_subscribing([subscriber], context, fn message ->
-    #     message = Rclex.Msg.read(message, @message_type)
-    #     Logger.debug('ping: ' ++ message.data)
+    # # {:ok, publishers} =
+    # #   Rclex.Node.create_publishers(node_id_list, @message_type, @pong_topic, :multi)
 
-    #     Rclex.Publisher.publish([publisher], [Utils.create_payload(message.data)])
-    #   end)
-    # end
+    # # for {_node_id, index} <- Enum.with_index(node_id_list) do
+    # #   subscriber = Enum.at(subscribers, index)
+    # #   publisher = Enum.at(publishers, index)
 
-    # {:ok, nil}
+    # #   Rclex.Subscriber.start_subscribing([subscriber], context, fn message ->
+    # #     message = Rclex.Msg.read(message, @message_type)
+    # #     Logger.debug('ping: ' ++ message.data)
 
-    publishers =
-      for i <- 0..(node_counts - 1) do
-        {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{i}")
+    # #     Rclex.Publisher.publish([publisher], [Utils.create_payload(message.data)])
+    # #   end)
+    # # end
 
-        Session.declare_subscriber(session, "#{@ping_topic}" <> "#{i}", fn message ->
-          IO.puts(message)
-        end)
+    # # {:ok, nil}
 
-        # FIX: IO.puts message to callback(publisher, message)
-        Logger.info("#{i}")
-        publisher
-      end
+    # publishers =
+    #   for i <- 0..(node_counts - 1) do
+    #     {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{i}")
 
-    # {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{0}")
-    # Session.declare_subscriber(session, "#{@ping_topic}" <> "#{0}", fn message -> callback(publisher, message) end)
+    #     Session.declare_subscriber(session, "#{@ping_topic}" <> "#{i}", fn message ->
+    #       Publisher.put(publisher, message)
+    #       IO.puts(message)
+    #     end)
 
-    # {:ok, %State{
-    #   publishers: publishers,
-    #   subscribers: subscribers
-    #   }}
+    #     # FIX: IO.puts message to callback(publisher, message)
+    #     Logger.info("#{i}")
+    #     publisher
+    #   end
+
+    # # {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{0}")
+    # # Session.declare_subscriber(session, "#{@ping_topic}" <> "#{0}", fn message -> callback(publisher, message) end)
+
+    # # {:ok, %State{
+    # #   publishers: publishers,
+    # #   subscribers: subscribers
+    # #   }}
 
     {:ok, nil}
   end
