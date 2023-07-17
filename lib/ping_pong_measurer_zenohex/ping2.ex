@@ -59,6 +59,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     node_id_list = Enum.map(node_publishers, &elem(&1, 0))
     publishers = Enum.map(node_publishers, &elem(&1, 1))
 
+    Logger.info("init Ping Module")
     {:ok,
     %State{
       session: session,
@@ -83,6 +84,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
 
       _ ->
         ping(node_id, publisher, message)
+        Logger.info("in ping")
     end
   end
 

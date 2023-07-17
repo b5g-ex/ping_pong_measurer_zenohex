@@ -40,9 +40,6 @@ defmodule PingPongMeasurerZenohex do
   end
 
   def wait_until_all_nodes_finished(node_counts, finished_node_counts \\ 0) do
-    IO.puts "---wait"
-    IO.inspect self()
-    IO.puts "---"
     receive do
       :finished ->
         finished_node_counts = finished_node_counts + 1
