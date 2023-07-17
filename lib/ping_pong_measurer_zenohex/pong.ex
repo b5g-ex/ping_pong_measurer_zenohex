@@ -1,4 +1,4 @@
-defmodule PingPongMeasurerZenohex.Pong2 do
+defmodule PingPongMeasurerZenohex.Pong do
   use GenServer
 
   require Logger
