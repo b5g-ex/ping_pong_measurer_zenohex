@@ -26,16 +26,27 @@ defmodule PingPongMeasurerZenohex.Ping2 do
 
   def init(node_counts) when is_integer(node_counts) do
     session = Zenohex.open()
-    {:ok, publisher} = Session.declare_publisher(session, "#{@ping_topic}" <> "#{0}")
 
-    Session.declare_subscriber(session, "#{@pong_topic}" <> "#{0}", fn message ->
-      Publisher.put(publisher, message)
-      IO.puts("Ping " <> message)
+    publishers =
+      for i <- 0..(node_counts - 1) do
+        {:ok, publisher} = Session.declare_publisher(session, "#{@ping_topic}" <> "#{i}")
+
+        Session.declare_subscriber(session, "#{@pong_topic}" <> "#{i}", fn message ->
+          Publisher.put(publisher, message)
+          IO.puts("Ping##{i}: " <> message)
+        end)
+
+        # FIX: IO.puts message to callback(publisher, message)
+        Logger.info("#{i}")
+        publisher
+      end
+
+    publishers
+    |> Enum.each(fn publisher ->
+      Publisher.put(publisher, "1")
     end)
 
-    Publisher.put(publisher, "1")
-
-    {:ok, publisher}
+    {:ok, nil}
 
     # {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, @node_id_prefix, node_counts)
 
