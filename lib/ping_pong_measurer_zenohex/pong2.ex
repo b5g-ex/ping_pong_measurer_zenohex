@@ -37,8 +37,11 @@ defmodule PingPongMeasurerZenohex.Pong2 do
 
 
     publishers = for i <- 0..(node_counts - 1) do
-      {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{i}")
-      Session.declare_subscriber(session, "#{@ping_topic}" <> "#{i}", fn message -> callback(publisher, message) end)
+      sub_node_id = "#{@ping_topic}" <> "#{i}"
+      pub_node_id = "#{@pong_topic}" <> "#{i}"
+
+      {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
+      Session.declare_subscriber(session, sub_node_id, fn message -> callback(publisher, message) end)
       # FIX: IO.puts message to callback(publisher, message)
       Logger.info("#{i}")
       publisher
