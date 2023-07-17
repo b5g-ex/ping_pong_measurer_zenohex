@@ -32,19 +32,20 @@ defmodule PingPongMeasurerZenohex.Ping do
 
     {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
 
-    Session.declare_subscriber(session, sub_node_id, fn message ->  callback(node_id, publisher, message, from) end)
-
+    Session.declare_subscriber(session, sub_node_id, fn message ->
+      callback(node_id, publisher, message, from)
+    end)
 
     node_id_list = {node_id}
     publishers = {publisher}
 
     {:ok,
-    %State{
-      session: session,
-      node_id_list: node_id_list,
-      publishers: publishers,
-      data_directory_path: data_directory_path
-    }}
+     %State{
+       session: session,
+       node_id_list: node_id_list,
+       publishers: publishers,
+       data_directory_path: data_directory_path
+     }}
   end
 
   defp callback(node_id, publisher, message, from) do
@@ -77,6 +78,7 @@ defmodule PingPongMeasurerZenohex.Ping do
       ping(node_id, publisher, String.to_charlist(payload))
     end)
     |> Enum.to_list()
+
     Logger.info("publishing")
   end
 
@@ -101,11 +103,12 @@ defmodule PingPongMeasurerZenohex.Ping do
     Measurer.increment_ping_counts(node_id)
   end
 
-  def sample_pub(publisher, _node_id, payload) do #when is_binary(payload) do
+  # when is_binary(payload) do
+  def sample_pub(publisher, _node_id, payload) do
     sample_ping(publisher, payload)
   end
 
-  defp sample_ping(publisher,payload) do
-    Publisher.put(publisher,payload)
+  defp sample_ping(publisher, payload) do
+    Publisher.put(publisher, payload)
   end
 end

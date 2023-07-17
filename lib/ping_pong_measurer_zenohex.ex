@@ -36,13 +36,15 @@ defmodule PingPongMeasurerZenohex do
   def start_ping_pong(payload) do
     Ping.get_publishers()
     |> Ping.publish(payload)
+
     Logger.info("start_ping_pong done.")
   end
 
   def wait_until_all_nodes_finished(node_counts, finished_node_counts \\ 0) do
-    IO.puts "---wait"
-    IO.inspect self()
-    IO.puts "---"
+    IO.puts("---wait")
+    IO.inspect(self())
+    IO.puts("---")
+
     receive do
       :finished ->
         finished_node_counts = finished_node_counts + 1
@@ -91,9 +93,9 @@ defmodule PingPongMeasurerZenohex do
     Logger.info("start_ping_measurer done.")
   end
 
-  def sample_start_process(node_counts,payload) do
+  def sample_start_process(node_counts, payload) do
     Ping.get_publishers()
-    |> Ping.sample_pub(node_counts,payload)
+    |> Ping.sample_pub(node_counts, payload)
   end
 
   def stop_ping_measurer() do
@@ -103,7 +105,8 @@ defmodule PingPongMeasurerZenohex do
   end
 
   defp os_info_supervisor_name() do
-    Module.concat(__MODULE__, OsInfo.DynamicSupervisor) #MEMO: concat of module names
+    # MEMO: concat of module names
+    Module.concat(__MODULE__, OsInfo.DynamicSupervisor)
   end
 
   defp ping_measurer_supervisor_name() do

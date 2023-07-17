@@ -11,6 +11,7 @@ defmodule PingPongMeasurerZenohex.Utils do
 
     msg
     """
+
     msg = charlist
     msg
   end

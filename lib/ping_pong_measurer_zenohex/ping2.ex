@@ -25,7 +25,6 @@ defmodule PingPongMeasurerZenohex.Ping2 do
   end
 
   def init({session, node_counts, data_directory_path, from}) when is_integer(node_counts) do
-
     # {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, @node_id_prefix, node_counts)
 
     # {:ok, publishers} =
@@ -43,29 +42,32 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     #    data_directory_path: data_directory_path
     #  }}
 
-    node_publishers = for i <- 0..(node_counts - 1) do
-      pub_node_id = "#{@ping_topic}" <> "#{i}"
-      sub_node_id = "#{@pong_topic}" <> "#{i}"
+    node_publishers =
+      for i <- 0..(node_counts - 1) do
+        pub_node_id = "#{@ping_topic}" <> "#{i}"
+        sub_node_id = "#{@pong_topic}" <> "#{i}"
 
-      node_id = @node_id_prefix ++ Integer.to_charlist(i)
+        node_id = @node_id_prefix ++ Integer.to_charlist(i)
 
-      {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
+        {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
 
-      Session.declare_subscriber(session, sub_node_id, fn message ->  callback(node_id, publisher, message, from) end)
+        Session.declare_subscriber(session, sub_node_id, fn message ->
+          callback(node_id, publisher, message, from)
+        end)
 
-      {node_id, {String.to_charlist(pub_node_id), publisher, :pub}}
-    end
+        {node_id, {String.to_charlist(pub_node_id), publisher, :pub}}
+      end
 
     node_id_list = Enum.map(node_publishers, &elem(&1, 0))
     publishers = Enum.map(node_publishers, &elem(&1, 1))
 
     {:ok,
-    %State{
-      session: session,
-      node_id_list: node_id_list,
-      publishers: publishers,
-      data_directory_path: data_directory_path
-    }}
+     %State{
+       session: session,
+       node_id_list: node_id_list,
+       publishers: publishers,
+       data_directory_path: data_directory_path
+     }}
   end
 
   defp callback(node_id, publisher, message, from) do
@@ -109,6 +111,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
       ping(node_id, publisher, String.to_charlist(payload))
     end)
     |> Enum.to_list()
+
     Logger.info("publishing")
   end
 
@@ -133,11 +136,12 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     Measurer.increment_ping_counts(node_id)
   end
 
-  def sample_pub(publisher, _node_id, payload) do #when is_binary(payload) do
+  # when is_binary(payload) do
+  def sample_pub(publisher, _node_id, payload) do
     sample_ping(publisher, payload)
   end
 
-  defp sample_ping(publisher,payload) do
-    Publisher.put(publisher,payload)
+  defp sample_ping(publisher, payload) do
+    Publisher.put(publisher, payload)
   end
 end
