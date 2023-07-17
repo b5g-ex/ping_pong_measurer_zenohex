@@ -24,7 +24,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
   end
 
-  def init({session, node_counts, data_directory_path}) when is_integer(node_counts) do
+  def init({session, node_counts, data_directory_path, from}) when is_integer(node_counts) do
 
     # {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, @node_id_prefix, node_counts)
 
@@ -51,7 +51,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
 
       {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
 
-      Session.declare_subscriber(session, sub_node_id, fn message ->  callback(node_id, publisher, message) end)
+      Session.declare_subscriber(session, sub_node_id, fn message ->  callback(node_id, publisher, message, from) end)
 
       {node_id, {String.to_charlist(pub_node_id), publisher, :pub}}
     end
@@ -68,8 +68,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     }}
   end
 
-  defp callback(node_id, publisher, message) do
-    from = self()
+  defp callback(node_id, publisher, message, from) do
     case Measurer.get_ping_counts(node_id) do
       0 ->
         # NOTE: 初回は外部から実行されインクリメントされるので、ここには来ない
@@ -98,8 +97,8 @@ defmodule PingPongMeasurerZenohex.Ping2 do
   def publish(publishers, payload) when is_binary(payload) do
     publishers
     |> Flow.from_enumerable(max_demand: 1, stages: Enum.count(publishers))
-    |> Flow.map(fn publisher ->
-      {node_id, _reference, :pub} = publisher
+    |> Flow.map(fn publisher_taple ->
+      {node_id, publisher, :pub} = publisher_taple
 
       Measurer.start_measurement(
         node_id,
@@ -110,6 +109,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
       ping(node_id, publisher, String.to_charlist(payload))
     end)
     |> Enum.to_list()
+    Logger.info("publishing")
   end
 
   def start_subscribing(from \\ self()) when is_pid(from) do
@@ -128,8 +128,16 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     {:noreply, %State{state | from: from}}
   end
 
-  def ping(node_id, publisher, payload_charlist) when is_list(payload_charlist) do
+  def ping(node_id, publisher, payload_charlist) do
     Publisher.put(publisher, payload_charlist)
     Measurer.increment_ping_counts(node_id)
+  end
+
+  def sample_pub(publisher, _node_id, payload) do #when is_binary(payload) do
+    sample_ping(publisher, payload)
+  end
+
+  defp sample_ping(publisher,payload) do
+    Publisher.put(publisher,payload)
   end
 end

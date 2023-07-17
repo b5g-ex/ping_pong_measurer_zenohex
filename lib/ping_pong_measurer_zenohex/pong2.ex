@@ -7,6 +7,7 @@ defmodule PingPongMeasurerZenohex.Pong2 do
   @ping_topic 'ping_topic'
   @pong_topic 'pong_topic'
 
+
   def start_link(args_tuple) do
     GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
   end
@@ -35,16 +36,21 @@ defmodule PingPongMeasurerZenohex.Pong2 do
     # {:ok, nil}
 
 
-    _publishers_subscribers = for i <- 0..(node_counts - 1) do
+    publishers = for i <- 0..(node_counts - 1) do
       {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{i}")
-      Session.declare_subscriber(session, "#{@ping_topic}" <> "#{i}", fn message -> callback(publisher, message) end)
-      # FIX: "payload_string" to message
+      Session.declare_subscriber(session, "#{@ping_topic}" <> "#{i}", fn message -> IO.puts message end)
+      # FIX: IO.puts message to callback(publisher, message)
+      Logger.info("#{i}")
       publisher
     end
 
-    # publishers = Enum.map(publishers_subscribers, &elem(&1, 0))
-    # subscribers = Enum.map(publishers_subscribers, &elem(&1, 1))
+    # {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{0}")
+    # Session.declare_subscriber(session, "#{@ping_topic}" <> "#{0}", fn message -> callback(publisher, message) end)
 
+    # {:ok, %State{
+    #   publishers: publishers,
+    #   subscribers: subscribers
+    #   }}
 
     {:ok, nil}
   end

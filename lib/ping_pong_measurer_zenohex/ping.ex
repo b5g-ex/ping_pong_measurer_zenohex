@@ -3,98 +3,109 @@ defmodule PingPongMeasurerZenohex.Ping do
 
   require Logger
 
-  alias PingPongMeasurerZenohex.Utils
+  @ping_max 10
+  @message_type 'StdMsgs.Msg.String'
+  @ping_topic 'ping_topic'
+  @pong_topic 'pong_topic'
+  @node_id_prefix 'ping_node'
+  @monotonic_time_unit :microsecond
 
-  @ping_counts_max 100
+  alias PingPongMeasurerZenohex.Ping2.Measurer
 
   defmodule State do
-    defstruct node_id: nil, publisher: nil, payload: "", ping_counts: 0, measurements: []
+    defstruct session: nil,
+              node_id_list: [],
+              publishers: [],
+              data_directory_path: "",
+              from: nil
   end
 
-  defmodule Measurement do
-    defstruct measurement_time: nil, send_time: nil, recv_time: nil
-
-    @type t() :: %__MODULE__{
-            measurement_time: DateTime.t(),
-            send_time: integer(),
-            recv_time: integer()
-          }
+  def start_link(args_tuple) do
+    GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
   end
 
-  def start_link({_, node_index} = args_tuple) do
-    GenServer.start_link(__MODULE__, args_tuple,
-      name: Utils.get_process_name(__MODULE__, node_index)
-    )
+  def init({session, node_counts, data_directory_path, from}) when is_integer(node_counts) do
+    pub_node_id = "#{@ping_topic}" <> "#{0}"
+    sub_node_id = "#{@pong_topic}" <> "#{0}"
+
+    node_id = @node_id_prefix ++ Integer.to_charlist(0)
+
+    {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
+
+    Session.declare_subscriber(session, sub_node_id, fn message ->  callback(node_id, publisher, message, from) end)
+
+
+    node_id_list = {node_id}
+    publishers = {publisher}
+
+    {:ok,
+    %State{
+      session: session,
+      node_id_list: node_id_list,
+      publishers: publishers,
+      data_directory_path: data_directory_path
+    }}
   end
 
-  def init({context, node_index}) when is_integer(node_index) do
-    # from rclex
-    # {:ok, node_id} =
-    #   Rclex.ResourceServer.create_node(context, 'ping_node' ++ to_charlist(node_index))
-
-    # ping_topic = 'ping' ++ to_charlist(node_index)
-    # pong_topic = 'pong' ++ to_charlist(node_index)
-
-    # {:ok, publisher} = Rclex.Node.create_publisher(node_id, 'StdMsgs.Msg.String', ping_topic)
-    # {:ok, subscriber} = Rclex.Node.create_subscriber(node_id, 'StdMsgs.Msg.String', pong_topic)
-
-
-    # Rclex.Subscriber.start_subscribing([subscriber], context, fn msg ->
-    #   recv_msg = Rclex.Msg.read(msg, 'StdMsgs.Msg.String')
-
-    #   Logger.info('pong: ' ++ recv_msg.data)
-    #   publish(node_index)
-    # end)
-
-    # payload = Utils.create_payload('message')
-
-    # {:ok, %State{node_id: node_id, publisher: publisher, payload: payload}}
-
-    session = Zenohex.open
-
-    {:ok, publisher} = Session.declare_publisher(session, "demo/example/zenoh-rs-pub")
-    Publisher.put(publisher, " (sample) Hello zenoh?")
-    Session.declare_subscriber(session, "demo/example/zenoh-rs-pub", fn m -> IO.inspect(m) end)
-
-    {:ok, %State{publisher: publisher}}
+  defp callback(node_id, publisher, message, from) do
+    Measurer.stop_measurement(node_id, System.monotonic_time(@monotonic_time_unit))
+    Logger.debug("#{inspect(Measurer.get_measurement_time(node_id))} msec")
+    Measurer.reset_ping_counts(node_id)
+    Process.send(from, :finished, _opts = [])
   end
 
-  def publish(node_index \\ 1) do
-    GenServer.call(Utils.get_process_name(__MODULE__, node_index), :publish)
+  def get_node_id_list() do
+    GenServer.call(__MODULE__, :get_node_id_list)
   end
 
-  def handle_call(
-        :publish,
-        _from,
-        %State{ping_counts: ping_counts, measurements: measurements} = state
-      ) do
-    state =
-      case ping_counts do
-        0 ->
-          measurement = %Measurement{
-            measurement_time: DateTime.utc_now(),
-            send_time: System.monotonic_time(:microsecond)
-          }
-
-          ping(state)
-          %State{state | ping_counts: ping_counts + 1, measurements: [measurement | measurements]}
-
-        @ping_counts_max ->
-          [h | t] = measurements
-          measurement = %Measurement{h | recv_time: System.monotonic_time(:microsecond)}
-          IO.inspect("#{inspect((measurement.recv_time - measurement.send_time) / 1000)} msec")
-
-          %State{state | ping_counts: 0, measurements: [measurement | t]}
-
-        _ ->
-          ping(state)
-          %State{state | ping_counts: ping_counts + 1}
-      end
-
-    {:reply, :ok, state}
+  def get_publishers do
+    GenServer.call(__MODULE__, :get_publishers)
   end
 
-  defp ping(%State{} = state) do
-    Rclex.Publisher.publish([state.publisher], [state.payload])
+  def publish(publishers, payload) when is_binary(payload) do
+    publishers
+    |> Flow.from_enumerable(max_demand: 1, stages: Enum.count(publishers))
+    |> Flow.map(fn publisher_taple ->
+      {node_id, publisher, :pub} = publisher_taple
+
+      Measurer.start_measurement(
+        node_id,
+        DateTime.utc_now(),
+        System.monotonic_time(@monotonic_time_unit)
+      )
+
+      ping(node_id, publisher, String.to_charlist(payload))
+    end)
+    |> Enum.to_list()
+    Logger.info("publishing")
+  end
+
+  def start_subscribing(from \\ self()) when is_pid(from) do
+    GenServer.cast(__MODULE__, {:start_subscribing, from})
+  end
+
+  def handle_call(:get_node_id_list, _from, state) do
+    {:reply, state.node_id_list, state}
+  end
+
+  def handle_call(:get_publishers, _from, state) do
+    {:reply, state.publishers, state}
+  end
+
+  def handle_cast({:start_subscribing, from}, %State{} = state) do
+    {:noreply, %State{state | from: from}}
+  end
+
+  def ping(node_id, publisher, payload_charlist) do
+    Publisher.put(publisher, payload_charlist)
+    Measurer.increment_ping_counts(node_id)
+  end
+
+  def sample_pub(publisher, _node_id, payload) do #when is_binary(payload) do
+    sample_ping(publisher, payload)
+  end
+
+  defp sample_ping(publisher,payload) do
+    Publisher.put(publisher,payload)
   end
 end
