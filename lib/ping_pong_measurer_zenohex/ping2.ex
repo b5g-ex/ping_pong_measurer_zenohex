@@ -16,6 +16,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     defstruct session: nil,
               node_id_list: [],
               publishers: [],
+              # subscribers: [],
               data_directory_path: "",
               from: nil
   end
@@ -24,92 +25,56 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
   end
 
-  def init(node_counts) when is_integer(node_counts) do
-    session = Zenohex.open()
+  def init({session, node_counts, data_directory_path}) when is_integer(node_counts) do
+    node_id_list = Enum.to_list(0..(node_counts - 1))
 
     publishers =
-      for i <- 0..(node_counts - 1) do
-        {:ok, publisher} = Session.declare_publisher(session, "#{@ping_topic}" <> "#{i}")
+      for node_id <- node_id_list do
+        {:ok, publisher} = Session.declare_publisher(session, "#{@ping_topic}" <> "#{node_id}")
 
-        Session.declare_subscriber(session, "#{@pong_topic}" <> "#{i}", fn message ->
-          Publisher.put(publisher, message)
-          IO.puts("Ping##{i}: " <> message)
-        end)
-
-        # FIX: IO.puts message to callback(publisher, message)
-        Logger.info("#{i}")
-        publisher
+        {node_id, publisher}
       end
 
-    publishers
+    {:ok,
+     %State{
+       session: session,
+       node_id_list: node_id_list,
+       publishers: publishers,
+       #  subscribers: subscribers,
+       data_directory_path: data_directory_path
+     }}
+  end
+
+  def start() do
+    GenServer.call(__MODULE__, :start)
+  end
+
+  def handle_call(:start, from, state) do
+    state.publishers
     |> Enum.each(fn publisher ->
-      Publisher.put(publisher, "1")
+      Publisher.put(publisher, state.payload)
     end)
 
-    {:ok, nil}
-
-    # {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, @node_id_prefix, node_counts)
-
-    # {:ok, publishers} =
-    #   Rclex.Node.create_publishers(node_id_list, @message_type, @ping_topic, :multi)
-
-    # {:ok, subscribers} =
-    #   Rclex.Node.create_subscribers(node_id_list, @message_type, @pong_topic, :multi)
-
-    # {:ok,
-    #  %State{
-    #    context: context,
-    #    node_id_list: node_id_list,
-    #    publishers: publishers,
-    #    subscribers: subscribers,
-    #    data_directory_path: data_directory_path
-    #  }}
-
-    # node_publishers =
-    #   for i <- 0..(node_counts - 1) do
-    #     pub_node_id = "#{@ping_topic}" <> "#{i}"
-    #     sub_node_id = "#{@pong_topic}" <> "#{i}"
-
-    #     node_id = @node_id_prefix ++ Integer.to_charlist(i)
-
-    #     {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
-
-    #     Session.declare_subscriber(session, sub_node_id, fn message ->
-    #       callback(node_id, publisher, message, from)
-    #     end)
-
-    #     {node_id, {String.to_charlist(pub_node_id), publisher, :pub}}
-    #   end
-
-    # node_id_list = Enum.map(node_publishers, &elem(&1, 0))
-    # publishers = Enum.map(node_publishers, &elem(&1, 1))
-
-    # {:ok,
-    #  %State{
-    #    session: session,
-    #    node_id_list: node_id_list,
-    #    publishers: publishers,
-    #    data_directory_path: data_directory_path
-    #  }}
+    {:noreply, state}
   end
 
-  defp callback(node_id, publisher, message, from) do
-    case Measurer.get_ping_counts(node_id) do
-      0 ->
-        # NOTE: 初回は外部から実行されインクリメントされるので、ここには来ない
-        #       ここに来る場合は同一ネットワーク内に Pong が複数起動していないか確認すること
-        raise RuntimeError
+  # defp callback(node_id, publisher, message, from) do
+  #   case Measurer.get_ping_counts(node_id) do
+  #     0 ->
+  #       # NOTE: 初回は外部から実行されインクリメントされるので、ここには来ない
+  #       #       ここに来る場合は同一ネットワーク内に Pong が複数起動していないか確認すること
+  #       raise RuntimeError
 
-      @ping_max ->
-        Measurer.stop_measurement(node_id, System.monotonic_time(@monotonic_time_unit))
-        Logger.debug("#{inspect(Measurer.get_measurement_time(node_id))} msec")
-        Measurer.reset_ping_counts(node_id)
-        Process.send(from, :finished, _opts = [])
+  #     @ping_max ->
+  #       Measurer.stop_measurement(node_id, System.monotonic_time(@monotonic_time_unit))
+  #       Logger.debug("#{inspect(Measurer.get_measurement_time(node_id))} msec")
+  #       Measurer.reset_ping_counts(node_id)
+  #       Process.send(from, :finished, _opts = [])
 
-      _ ->
-        ping(node_id, publisher, message)
-    end
-  end
+  #     _ ->
+  #       ping(node_id, publisher, message)
+  #   end
+  # end
 
   def get_node_id_list() do
     GenServer.call(__MODULE__, :get_node_id_list)
@@ -123,7 +88,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     publishers
     |> Flow.from_enumerable(max_demand: 1, stages: Enum.count(publishers))
     |> Flow.map(fn publisher_taple ->
-      {node_id, publisher, :pub} = publisher_taple
+      {node_id, publisher} = publisher_taple
 
       Measurer.start_measurement(
         node_id,
@@ -131,15 +96,44 @@ defmodule PingPongMeasurerZenohex.Ping2 do
         System.monotonic_time(@monotonic_time_unit)
       )
 
-      ping(node_id, publisher, String.to_charlist(payload))
+      ping(node_id, publisher, payload)
     end)
     |> Enum.to_list()
+  end
 
-    Logger.info("publishing")
+  def handle_call(:start_subscribing, from, %State{} = state) do
+    for {node_id, publisher} <- state.publishers do
+      # for {node_id, index} <- Enum.with_index(state.node_id_list) do
+      # {_, @ping_topic ++ publisher_index, :pub} = publisher = Enum.at(state.publishers, index)
+
+      Session.declare_subscriber(state.session, "#{@pong_topic}" <> "#{node_id}", fn message ->
+        count = Measurer.get_ping_counts(node_id)
+
+        cond do
+          count == 0 ->
+            # NOTE: 初回は外部から実行されインクリメントされるので、ここには来ない
+            #       ここに来る場合は同一ネットワーク内に Pong が複数起動していないか確認すること
+            raise RuntimeError
+
+          count >= @ping_max ->
+            Measurer.stop_measurement(node_id, System.monotonic_time(@monotonic_time_unit))
+            Logger.debug("#{inspect(Measurer.get_measurement_time(node_id))} msec")
+            Measurer.reset_ping_counts(node_id)
+            {pid, _} = from
+            Process.send(pid, :finished, _opts = [])
+
+          true ->
+            # IO.puts("message from pong: #{message}")
+            ping(node_id, publisher, message)
+        end
+      end)
+    end
+
+    {:reply, %State{state | from: from}, %State{state | from: from}}
   end
 
   def start_subscribing(from \\ self()) when is_pid(from) do
-    GenServer.cast(__MODULE__, {:start_subscribing, from})
+    GenServer.call(__MODULE__, :start_subscribing)
   end
 
   def handle_call(:get_node_id_list, _from, state) do
@@ -150,21 +144,12 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     {:reply, state.publishers, state}
   end
 
-  def handle_cast({:start_subscribing, from}, %State{} = state) do
-    {:noreply, %State{state | from: from}}
-  end
+  # def handle_cast({:start_subscribing, from}, %State{} = state) do
+  #   {:noreply, %State{state | from: from}}
+  # end
 
-  def ping(node_id, publisher, payload_charlist) do
-    Publisher.put(publisher, payload_charlist)
-    Measurer.increment_ping_counts(node_id)
-  end
-
-  # when is_binary(payload) do
-  def sample_pub(publisher, _node_id, payload) do
-    sample_ping(publisher, payload)
-  end
-
-  defp sample_ping(publisher, payload) do
+  def ping(node_id, publisher, payload) do
     Publisher.put(publisher, payload)
+    Measurer.increment_ping_counts(node_id)
   end
 end

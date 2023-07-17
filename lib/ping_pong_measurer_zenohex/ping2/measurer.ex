@@ -54,12 +54,12 @@ defmodule PingPongMeasurerZenohex.Ping2.Measurer do
   def init(%{node_id: node_id, data_directory_path: data_directory_path} = _args_map) do
     Process.flag(:trap_exit, true)
 
-    @node_id_prefix ++ index = node_id
+    # @node_id_prefix ++ index = node_id
 
     {:ok,
      %State{
        ping_counts: 0,
-       process_index: List.to_integer(index),
+       process_index: node_id,
        data_directory_path: data_directory_path
      }}
   end
@@ -115,8 +115,9 @@ defmodule PingPongMeasurerZenohex.Ping2.Measurer do
     {:noreply, %State{state | measurements: [h | t]}}
   end
 
-  defp to_global(node_id_charlist) when is_list(node_id_charlist) do
-    {:global, node_id_charlist ++ '_measurer'}
+  defp to_global(node_id) do
+    global_name = to_charlist(node_id) ++ '_measurer'
+    {:global, global_name}
   end
 
   defp header() do

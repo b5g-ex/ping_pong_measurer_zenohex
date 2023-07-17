@@ -3,20 +3,23 @@ defmodule MeasurementHelper do
 
   alias PingPongMeasurerZenohex.Data
 
-  def start_measurement(node_counts \\ 1, payload_bytes \\ 10, measurement_times \\ 10)
-      when node_counts in [1, 10, 100] and payload_bytes in [10, 100, 1000, 10000] do
+  def test() do
+    start_pong_processes(30)
+    start_measurement(30, 1000, 100)
+  end
+
+  def start_pong_processes(node_counts) do
+    PingPongMeasurerZenohex.Pong2.start_link({Zenohex.open(), node_counts})
+  end
+
+  def start_measurement(node_counts \\ 1, payload_bytes \\ 10, measurement_times \\ 10) do
+    # when node_counts in [1, 10, 100] and payload_bytes in [10, 100, 1000, 10000] do
     data_directory_path = prepare_data_directory!(node_counts, payload_bytes, measurement_times)
 
-    context = Zenohex.open()
+    session = Zenohex.open()
 
-    # PingPongMeasurerZenohex.start_os_info_measurement(data_directory_path)
-    PingPongMeasurerZenohex.start_ping_processes(
-      context,
-      node_counts,
-      data_directory_path,
-      self()
-    )
-
+    PingPongMeasurerZenohex.start_os_info_measurement(data_directory_path)
+    PingPongMeasurerZenohex.start_ping_processes(session, node_counts, data_directory_path)
     PingPongMeasurerZenohex.start_ping_measurer(data_directory_path)
 
     for i <- 1..measurement_times do
@@ -28,17 +31,7 @@ defmodule MeasurementHelper do
 
     PingPongMeasurerZenohex.stop_ping_measurer()
     PingPongMeasurerZenohex.stop_ping_processes()
-    # PingPongMeasurerZenohex.stop_os_info_measurement()
-  end
-
-  def sample_start_measurement(node_counts \\ 1, payload_bytes \\ 10, measurement_times \\ 10)
-      when node_counts in [1, 10, 100] and payload_bytes in [10, 100, 1000, 10000] do
-    from = self()
-    context = Zenohex.open()
-    data_directory_path = prepare_data_directory!(node_counts, payload_bytes, measurement_times)
-    PingPongMeasurerZenohex.start_ping_processes(context, node_counts, data_directory_path, from)
-    PingPongMeasurerZenohex.sample_start_process(node_counts, "Hello?")
-    PingPongMeasurerZenohex.stop_ping_processes()
+    PingPongMeasurerZenohex.stop_os_info_measurement()
   end
 
   defp prepare_data_directory!(node_counts, payload_bytes, measurement_times) do
@@ -46,7 +39,7 @@ defmodule MeasurementHelper do
       Application.get_env(:ping_pong_measurer_zenohex, :data_directory_path) ||
         raise """
         You have to configure :data_directory_path in config.exs
-        ex) config :ping_pong_measurer_Zenohex, :data_directory_path, "path/to/directory"
+        ex) config :ping_pong_measurer_zenohex, :data_directory_path, "path/to/directory"
         """
 
     dt_string = Data.datetime_to_string(DateTime.utc_now())

@@ -12,8 +12,8 @@ defmodule PingPongMeasurerZenohex do
   alias PingPongMeasurerZenohex.OsInfo.MemoryMeasurer
   alias PingPongMeasurerZenohex.Ping2.Measurer, as: PingMeasurer
 
-  def start_ping_processes(context, node_counts, data_directory_path, from) do
-    Ping.start_link({context, node_counts, data_directory_path, from})
+  def start_ping_processes(session, node_counts, data_directory_path) do
+    Ping.start_link({session, node_counts, data_directory_path})
     Ping.start_subscribing()
 
     Logger.info("start_ping_processes done.")
@@ -25,8 +25,8 @@ defmodule PingPongMeasurerZenohex do
     Logger.info("stop_ping_processes done.")
   end
 
-  def start_pong_processes(context, node_counts) do
-    Pong.start_link({context, node_counts})
+  def start_pong_processes(session, node_counts) do
+    Pong.start_link({session, node_counts})
   end
 
   def stop_pong_processes() do
@@ -41,13 +41,10 @@ defmodule PingPongMeasurerZenohex do
   end
 
   def wait_until_all_nodes_finished(node_counts, finished_node_counts \\ 0) do
-    IO.puts("---wait")
-    IO.inspect(self())
-    IO.puts("---")
-
     receive do
       :finished ->
         finished_node_counts = finished_node_counts + 1
+        IO.puts("#{finished_node_counts}/#{node_counts}")
 
         if(node_counts > finished_node_counts) do
           wait_until_all_nodes_finished(node_counts, finished_node_counts)
