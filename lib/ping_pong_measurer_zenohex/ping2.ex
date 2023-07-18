@@ -79,13 +79,12 @@ defmodule PingPongMeasurerZenohex.Ping2 do
 
       @ping_max ->
         Measurer.stop_measurement(node_id, System.monotonic_time(@monotonic_time_unit))
-        Logger.debug("#{inspect(Measurer.get_measurement_time(node_id))} msec")
+        IO.inspect("#{inspect(Measurer.get_measurement_time(node_id))} msec")
         Measurer.reset_ping_counts(node_id)
         Process.send(from, :finished, _opts = [])
 
       _ ->
         ping(node_id, publisher, message)
-        Logger.info("in ping")
     end
   end
 

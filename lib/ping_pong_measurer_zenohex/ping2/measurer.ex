@@ -32,7 +32,6 @@ defmodule PingPongMeasurerZenohex.Ping2.Measurer do
   end
 
   def increment_ping_counts(name) do
-    IO.inspect "increment_ping_counts api"
     GenServer.cast(to_global(name), :increment_ping_counts)
   end
 
@@ -92,7 +91,6 @@ defmodule PingPongMeasurerZenohex.Ping2.Measurer do
   end
 
   def handle_cast(:increment_ping_counts, %State{ping_counts: ping_counts} = state) do
-    IO.inspect("increment_ping_counts")
     {:noreply, %State{state | ping_counts: ping_counts + 1}}
   end
 
@@ -114,6 +112,7 @@ defmodule PingPongMeasurerZenohex.Ping2.Measurer do
 
   def handle_cast({:stop_measurement, monotonic_time}, %State{measurements: [h | t]} = state) do
     h = %Measurement{h | recv_time: monotonic_time}
+    IO.inspect("stop_measurement")
     {:noreply, %State{state | measurements: [h | t]}}
   end
 

@@ -14,7 +14,7 @@ defmodule PingPongMeasurerZenohex.Pong do
 
   def init({session, node_counts}) when is_integer(node_counts) do
     {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{0}")
-    Session.declare_subscriber(session, "#{@ping_topic}" <> "#{0}", fn message -> IO.puts message end)
+    Session.declare_subscriber(session, "#{@ping_topic}" <> "#{0}", fn message -> callback(publisher, message) end)
     # FIX: IO.puts message to callback(publisher, message)
     Logger.info("#{0}")
     {:ok, nil}
