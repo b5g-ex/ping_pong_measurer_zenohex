@@ -108,7 +108,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
         System.monotonic_time(@monotonic_time_unit)
       )
 
-      ping(node_id, publisher, String.to_charlist(payload))
+      ping(node_id, publisher, payload)
     end)
     |> Enum.to_list()
     Logger.info("publishing")
@@ -130,8 +130,8 @@ defmodule PingPongMeasurerZenohex.Ping2 do
     {:noreply, %State{state | from: from}}
   end
 
-  def ping(node_id, publisher, payload_charlist) do
-    Publisher.put(publisher, payload_charlist)
+  def ping(node_id, publisher, payload_string) do
+    Publisher.put(publisher, payload_string)
     Measurer.increment_ping_counts(node_id)
   end
 
