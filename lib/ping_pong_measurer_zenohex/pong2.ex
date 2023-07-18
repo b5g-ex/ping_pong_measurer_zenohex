@@ -61,6 +61,5 @@ defmodule PingPongMeasurerZenohex.Pong2 do
   defp callback(publisher, message) do
     Publisher.put(publisher, message)
     IO.inspect message
-    IO.inspect "pong callback"
   end
 end
