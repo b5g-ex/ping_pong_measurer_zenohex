@@ -3,7 +3,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
 
   require Logger
 
-  @ping_max 1000
+  @ping_max 10
   @message_type 'StdMsgs.Msg.String'
   @ping_topic 'ping_topic'
   @pong_topic 'pong_topic'
