@@ -70,11 +70,6 @@ defmodule PingPongMeasurerZenohex.Ping2 do
 
   defp callback(node_id, publisher, message, from) do
     case Measurer.get_ping_counts(node_id) do
-      # 0 ->
-      #   # NOTE: 初回は外部から実行されインクリメントされるので、ここには来ない
-      #   #       ここに来る場合は同一ネットワーク内に Pong が複数起動していないか確認すること
-      #   # raise RuntimeError
-      #   IO.inspect "ping2 callback case 0"
 
       @ping_max ->
         Measurer.stop_measurement(node_id, System.monotonic_time(@monotonic_time_unit))

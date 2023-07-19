@@ -56,7 +56,7 @@ defmodule PingPongMeasurerZenohex.Ping2.Measurer do
            %PingPongMeasurerZenohex.Ping2.Measurer.State{
              data_directory_path: any,
              measurements: [],
-             ping_counts: 1,
+             ping_counts: 0,
              process_index: integer
            }}
   def init(%{node_id: node_id, data_directory_path: data_directory_path} = _args_map) do
@@ -66,7 +66,7 @@ defmodule PingPongMeasurerZenohex.Ping2.Measurer do
 
     {:ok,
      %State{
-       ping_counts: 1,
+       ping_counts: 0,
        process_index: List.to_integer(index),
        data_directory_path: data_directory_path
      }}
