@@ -51,6 +51,14 @@ defmodule PingPongMeasurerZenohex.Ping2.Measurer do
     GenServer.call(to_global(name), :get_measurement_time)
   end
 
+  @spec init(%{:data_directory_path => any, :node_id => [char, ...], optional(any) => any}) ::
+          {:ok,
+           %PingPongMeasurerZenohex.Ping2.Measurer.State{
+             data_directory_path: any,
+             measurements: [],
+             ping_counts: 1,
+             process_index: integer
+           }}
   def init(%{node_id: node_id, data_directory_path: data_directory_path} = _args_map) do
     Process.flag(:trap_exit, true)
 
@@ -112,7 +120,6 @@ defmodule PingPongMeasurerZenohex.Ping2.Measurer do
 
   def handle_cast({:stop_measurement, monotonic_time}, %State{measurements: [h | t]} = state) do
     h = %Measurement{h | recv_time: monotonic_time}
-    IO.inspect("stop_measurement")
     {:noreply, %State{state | measurements: [h | t]}}
   end
 

@@ -3,7 +3,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
 
   require Logger
 
-  @ping_max 10
+  @ping_max 1000
   @message_type 'StdMsgs.Msg.String'
   @ping_topic 'ping_topic'
   @pong_topic 'pong_topic'
@@ -53,7 +53,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
 
       Session.declare_subscriber(session, sub_node_id, fn message ->  callback(node_id, publisher, message, from) end)
 
-      {node_id, {String.to_charlist(pub_node_id), publisher, :pub}}
+      {node_id, {node_id, publisher, :pub}}
     end
 
     node_id_list = Enum.map(node_publishers, &elem(&1, 0))
