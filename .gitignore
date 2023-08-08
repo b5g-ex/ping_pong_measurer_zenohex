@@ -25,3 +25,4 @@ ping_pong_measurer_zenohex-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 
+/data/

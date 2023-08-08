@@ -1,4 +1,4 @@
-defmodule PingPongMeasurerRclex.Ping2.Measurer do
+defmodule PingPongMeasurerZenohex.Ping2.Measurer do
   # NOTE: USE SHUTDOWN PARAMETER LIKE BELOW,
   #       WHEN YOUR CODES NEED SOME TIME TO PROCESS TERMINATE FUNCTION
   use GenServer, shutdown: :infinity
@@ -51,6 +51,14 @@ defmodule PingPongMeasurerRclex.Ping2.Measurer do
     GenServer.call(to_global(name), :get_measurement_time)
   end
 
+  @spec init(%{:data_directory_path => any, :node_id => [char, ...], optional(any) => any}) ::
+          {:ok,
+           %PingPongMeasurerZenohex.Ping2.Measurer.State{
+             data_directory_path: any,
+             measurements: [],
+             ping_counts: 0,
+             process_index: integer
+           }}
   def init(%{node_id: node_id, data_directory_path: data_directory_path} = _args_map) do
     Process.flag(:trap_exit, true)
 
@@ -77,6 +85,8 @@ defmodule PingPongMeasurerRclex.Ping2.Measurer do
     file_path = Path.join(data_directory_path, file_name)
 
     Data.save(file_path, [header() | body(measurements)])
+
+    Logger.info("measurer #{file_name} done.")
   end
 
   def handle_call(:get_ping_counts, _from, %State{} = state) do

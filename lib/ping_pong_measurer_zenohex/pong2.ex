@@ -7,7 +7,6 @@ defmodule PingPongMeasurerZenohex.Pong2 do
   @ping_topic 'ping_topic'
   @pong_topic 'pong_topic'
 
-  alias PingPongMeasurerZenohex.Utils
 
   def start_link(args_tuple) do
     GenServer.start_link(__MODULE__, args_tuple, name: __MODULE__)
@@ -36,22 +35,31 @@ defmodule PingPongMeasurerZenohex.Pong2 do
 
     # {:ok, nil}
 
-    # session = Zenohex.open
-    {:ok, publisher} = Session.declare_publisher(session, "demo/example/zenoh-rs-pub")
-    subscriber = Session.declare_subscriber(session, "demo/example/zenoh-rs-pub", fn m -> IO.inspect(m) end)
 
-    publishers = [publisher]
-    subscribers = [subscriber]
+    publishers = for i <- 0..(node_counts - 1) do
+      sub_node_id = "#{@ping_topic}" <> "#{i}"
+      pub_node_id = "#{@pong_topic}" <> "#{i}"
 
-    node_id_list = [0]
-
-    for {_node_id, index} <- Enum.with_index(node_id_list) do
-      subscriber = Enum.at(subscribers, index)
-      publisher = Enum.at(publishers, index)
-
-      payload = "payload_string"
-
-      Publisher.put(publisher, payload)
+      {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
+      Session.declare_subscriber(session, sub_node_id, fn message -> callback(publisher, message) end)
+      # FIX: IO.puts message to callback(publisher, message)
+      Logger.info("#{i}")
+      publisher
     end
+
+    # {:ok, publisher} = Session.declare_publisher(session, "#{@pong_topic}" <> "#{0}")
+    # Session.declare_subscriber(session, "#{@ping_topic}" <> "#{0}", fn message -> callback(publisher, message) end)
+
+    # {:ok, %State{
+    #   publishers: publishers,
+    #   subscribers: subscribers
+    #   }}
+
+    {:ok, nil}
+  end
+
+  defp callback(publisher, message) do
+    Publisher.put(publisher, message)
+    IO.inspect message
   end
 end

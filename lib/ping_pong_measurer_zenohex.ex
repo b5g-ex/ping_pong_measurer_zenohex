@@ -12,8 +12,8 @@ defmodule PingPongMeasurerZenohex do
   alias PingPongMeasurerZenohex.OsInfo.MemoryMeasurer
   alias PingPongMeasurerZenohex.Ping2.Measurer, as: PingMeasurer
 
-  def start_ping_processes(context, node_counts, data_directory_path) do
-    Ping.start_link({context, node_counts, data_directory_path})
+  def start_ping_processes(context, node_counts, data_directory_path, from) do
+    Ping.start_link({context, node_counts, data_directory_path, from})
     Ping.start_subscribing()
 
     Logger.info("start_ping_processes done.")
@@ -36,6 +36,7 @@ defmodule PingPongMeasurerZenohex do
   def start_ping_pong(payload) do
     Ping.get_publishers()
     |> Ping.publish(payload)
+    Logger.info("start_ping_pong done.")
   end
 
   def wait_until_all_nodes_finished(node_counts, finished_node_counts \\ 0) do
@@ -85,6 +86,11 @@ defmodule PingPongMeasurerZenohex do
     end
 
     Logger.info("start_ping_measurer done.")
+  end
+
+  def sample_start_process(node_counts,payload) do
+    Ping.get_publishers()
+    |> Ping.sample_pub(node_counts,payload)
   end
 
   def stop_ping_measurer() do
