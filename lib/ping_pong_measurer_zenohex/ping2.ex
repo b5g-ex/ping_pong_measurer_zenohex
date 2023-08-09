@@ -25,24 +25,6 @@ defmodule PingPongMeasurerZenohex.Ping2 do
   end
 
   def init({session, node_counts, data_directory_path, from}) when is_integer(node_counts) do
-
-    # {:ok, node_id_list} = Rclex.ResourceServer.create_nodes(context, @node_id_prefix, node_counts)
-
-    # {:ok, publishers} =
-    #   Rclex.Node.create_publishers(node_id_list, @message_type, @ping_topic, :multi)
-
-    # {:ok, subscribers} =
-    #   Rclex.Node.create_subscribers(node_id_list, @message_type, @pong_topic, :multi)
-
-    # {:ok,
-    #  %State{
-    #    context: context,
-    #    node_id_list: node_id_list,
-    #    publishers: publishers,
-    #    subscribers: subscribers,
-    #    data_directory_path: data_directory_path
-    #  }}
-
     node_publishers = for i <- 0..(node_counts - 1) do
       pub_node_id = "#{@ping_topic}" <> "#{i}"
       sub_node_id = "#{@pong_topic}" <> "#{i}"
@@ -73,7 +55,7 @@ defmodule PingPongMeasurerZenohex.Ping2 do
 
       @ping_max ->
         Measurer.stop_measurement(node_id, System.monotonic_time(@monotonic_time_unit))
-        IO.inspect("#{inspect(Measurer.get_measurement_time(node_id))} msec")
+        # IO.inspect("#{inspect(Measurer.get_measurement_time(node_id))} msec")
         Measurer.reset_ping_counts(node_id)
         Process.send(from, :finished, _opts = [])
 
