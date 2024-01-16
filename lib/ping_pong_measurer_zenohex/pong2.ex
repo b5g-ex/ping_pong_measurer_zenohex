@@ -43,7 +43,6 @@ defmodule PingPongMeasurerZenohex.Pong2 do
       {:ok, publisher} = Session.declare_publisher(session, pub_node_id)
       Session.declare_subscriber(session, sub_node_id, fn message -> callback(publisher, message) end)
       # FIX: IO.puts message to callback(publisher, message)
-      Logger.info("#{i}")
       publisher
     end
 
@@ -60,6 +59,5 @@ defmodule PingPongMeasurerZenohex.Pong2 do
 
   defp callback(publisher, message) do
     Publisher.put(publisher, message)
-    IO.inspect message
   end
 end

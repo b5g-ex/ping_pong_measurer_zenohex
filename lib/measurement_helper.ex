@@ -13,11 +13,9 @@ defmodule MeasurementHelper do
     PingPongMeasurerZenohex.start_ping_processes(context, node_counts, data_directory_path, self())
     PingPongMeasurerZenohex.start_ping_measurer(data_directory_path)
 
-    for i <- 1..measurement_times do
+    for _ <- 1..measurement_times do
       PingPongMeasurerZenohex.start_ping_pong(String.duplicate("a", payload_bytes))
       PingPongMeasurerZenohex.wait_until_all_nodes_finished(node_counts)
-
-      Logger.info(">>>>>>>>>> #{i}/#{measurement_times}")
     end
 
     PingPongMeasurerZenohex.stop_ping_measurer()
