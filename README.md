@@ -1,21 +1,10 @@
 # PingPongMeasurerZenohex
+This repository contains the code for performance measurement of the [Zenoh](https://github.com/eclipse-zenoh/zenoh) Elixir binding, [Zenohex](https://github.com/b5g-ex/zenohex). The code is specifically designed for conducting ping-pong communication tests.
 
-**TODO: Add description**
+## Overview
 
-## Installation
+Zenohex is a communication middleware that provides Elixir bindings for Zenoh. This benchmark focuses on evaluating the performance of Zenohex in parallel execution through ping-pong communication scenarios.
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `ping_pong_measurer_zenohex` to your list of dependencies in `mix.exs`:
+## how To Use
 
-```elixir
-def deps do
-  [
-    {:ping_pong_measurer_zenohex, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/ping_pong_measurer_zenohex>.
-
+[WiP]
