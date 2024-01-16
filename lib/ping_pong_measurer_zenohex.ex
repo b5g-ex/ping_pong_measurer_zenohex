@@ -19,8 +19,6 @@ defmodule PingPongMeasurerZenohex do
 
   def stop_ping_processes() do
     GenServer.stop(Ping)
-
-    Logger.info("stop_ping_processes done.")
   end
 
   def start_pong_processes(context, node_counts) do
@@ -61,8 +59,6 @@ defmodule PingPongMeasurerZenohex do
       ds_name,
       {MemoryMeasurer, {data_directory_path, measurement_cycle_ms}}
     )
-
-    Logger.info("start_os_info_measurement done.")
   end
 
   def stop_os_info_measurement() do
@@ -79,8 +75,6 @@ defmodule PingPongMeasurerZenohex do
         {PingMeasurer, %{node_id: node_id, data_directory_path: data_directory_path}}
       )
     end
-
-    Logger.info("start_ping_measurer done.")
   end
 
   def sample_start_process(node_counts,payload) do
