@@ -16,7 +16,7 @@ In this example, the number of pong nodes are 10
 - start ping nodes in another terminal
 ```bash
 iex -S mix
-iex>MeasurementHelper.start_measurement(10, 100, 1)
+iex> MeasurementHelper.start_measurement(10, 100, 1)
 ```
 node_counts is 10, payload_bytes is 100, measurement_times is 1
 
